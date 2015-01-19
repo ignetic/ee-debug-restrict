@@ -17,14 +17,15 @@ class Ee_debug_restrict_ext {
 	public $docs_url		= '';
 	public $name			= 'EE Debug Restrict';
 	public $settings_exist	= 'y';
-	public $version			= '1.0';
+	public $version			= '1.1';
 	
 	private $default_settings = array(
 		'ip_filter' => '',
 		'member_filter' => array(),
-		'output' => array(),
-		'admin_sess' => '',
-		'disable_ajax' => '',
+		'output' => array('show_profiler', 'template_debugging'),
+		'admin_sess' => 'n',
+		'show_in_cp' => 'n',
+		'disable_ajax' => 'y',
 	);
 	
 	private $EE;
@@ -63,11 +64,12 @@ class Ee_debug_restrict_ext {
 		}
 		
 		return array(
-			'ip_filter'  => array('t', array('rows' => '4'), ''),
-			'member_filter'  => array('ms', $members, ''),
-			'output'  => array('c', array('show_profiler' => "Display Output Profiler?", 'template_debugging' => "Display Template Debugging?"), array('show_profiler', 'template_debugging')),
-			'admin_sess'  => array('r', array('y' => "Yes", 'n' => "No"), 'n'),
-			'disable_ajax'  => array('r', array('y' => "Yes", 'n' => "No"), 'y')
+			'ip_filter'  => array('t', array('rows' => '4'), $this->default_settings['ip_filter']),
+			'member_filter'  => array('ms', $members, $this->default_settings['member_filter']),
+			'output'  => array('c', array('show_profiler' => 'Display Output Profiler?', 'template_debugging' => 'Display Template Debugging?'), $this->default_settings['output']),
+			'admin_sess'  => array('r', array('y' => "Yes", 'n' => "No"), $this->default_settings['admin_sess']),
+			'show_in_cp'  => array('r', array('y' => "Yes", 'n' => "No"), $this->default_settings['show_in_cp']),
+			'disable_ajax'  => array('r', array('y' => "Yes", 'n' => "No"), $this->default_settings['disable_ajax'])
 		);
 	}
 	
@@ -155,6 +157,12 @@ class Ee_debug_restrict_ext {
 	
 		// Only display if logged in as admin
 		if ($settings['admin_sess'] == 'y' && $member_data['admin_sess'] != 1)
+		{
+			return;
+		}
+		
+		// Don't display in admin
+		if ($settings['show_in_cp'] != 'y' && ee()->uri->segment(1) == 'cp')
 		{
 			return;
 		}
