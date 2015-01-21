@@ -13,22 +13,20 @@
 class Ee_debug_restrict_ext {
 	
 	public $settings 		= array();
-	public $description		= 'Restricts template debugging and profiler to specified IP address';
+	public $description		= 'Restricts output debugging to specified IP address or member';
 	public $docs_url		= '';
 	public $name			= 'EE Debug Restrict';
 	public $settings_exist	= 'y';
-	public $version			= '1.1';
+	public $version			= '1.2';
 	
 	private $default_settings = array(
-		'ip_filter' => '',
+		'ip_filter' => '127.0.0.*\n192.168.*.*',
 		'member_filter' => array(),
 		'output' => array('show_profiler', 'template_debugging'),
 		'admin_sess' => 'n',
-		'show_in_cp' => 'n',
+		'disable_in_cp' => 'y',
 		'disable_ajax' => 'y',
 	);
-	
-	private $EE;
 	
 	/**
 	 * Constructor
@@ -37,7 +35,6 @@ class Ee_debug_restrict_ext {
 	 */
 	public function __construct($settings = '')
 	{
-		$this->EE =& get_instance();
 		$this->settings = $settings;
 	}
 	
@@ -68,7 +65,7 @@ class Ee_debug_restrict_ext {
 			'member_filter'  => array('ms', $members, $this->default_settings['member_filter']),
 			'output'  => array('c', array('show_profiler' => 'Display Output Profiler?', 'template_debugging' => 'Display Template Debugging?'), $this->default_settings['output']),
 			'admin_sess'  => array('r', array('y' => "Yes", 'n' => "No"), $this->default_settings['admin_sess']),
-			'show_in_cp'  => array('r', array('y' => "Yes", 'n' => "No"), $this->default_settings['show_in_cp']),
+			'disable_in_cp'  => array('r', array('y' => "Yes", 'n' => "No"), $this->default_settings['disable_in_cp']),
 			'disable_ajax'  => array('r', array('y' => "Yes", 'n' => "No"), $this->default_settings['disable_ajax'])
 		);
 	}
@@ -89,7 +86,7 @@ class Ee_debug_restrict_ext {
 	{
 		// Setup custom settings in this array.
 		$this->settings = array(
-			'ip_filter'	=> "127.0.0.*\n192.168.*.*",
+			'ip_filter'	=> $default_settings['ip_filter'],
 		);
 		
 		$data = array(
@@ -101,7 +98,7 @@ class Ee_debug_restrict_ext {
 			'enabled'	=> 'y'
 		);
 
-		$this->EE->db->insert('extensions', $data);			
+		ee()->db->insert('extensions', $data);			
 		
 	}	
 
@@ -115,7 +112,7 @@ class Ee_debug_restrict_ext {
 	 */
 	public function sessions_start(&$data)
 	{
-		
+
 		// Session class variables not initiated at this point, so lets grab them from the cookie
 		$sessionid  = ee()->input->cookie('sessionid', TRUE);
 		
@@ -146,8 +143,8 @@ class Ee_debug_restrict_ext {
 		$member_found = FALSE;
 		
 		// Initially switch off outputs
-		$this->EE->config->set_item('show_profiler', 'n');
-		$this->EE->config->set_item('template_debugging', 'n');
+		ee()->config->set_item('show_profiler', 'n');
+		ee()->config->set_item('template_debugging', 'n');
 
 		// Do nothing if nothing is selected
 		if ( empty($settings['ip_filter']) && empty($settings['member_filter']) )
@@ -162,11 +159,12 @@ class Ee_debug_restrict_ext {
 		}
 		
 		// Don't display in admin
-		if ($settings['show_in_cp'] != 'y' && ee()->uri->segment(1) == 'cp')
+		//if ($settings['disable_in_cp'] != 'y' && ee()->uri->segment(1) == 'cp')
+		ee()->load->helper('url');
+		if ($settings['disable_in_cp'] == 'y' && site_url().basename($_SERVER['SCRIPT_NAME']) == ee()->config->item('cp_url'))
 		{
 			return;
 		}
-		
 		
 		// Restrict by member
 		if (in_array($member_data['member_id'], $settings['member_filter']))
@@ -191,7 +189,7 @@ class Ee_debug_restrict_ext {
 			$ipregex = preg_replace("/\./", "\.", $ip);
 			$ipregex = preg_replace("/\*/", ".*", $ipregex);
 
-			if( preg_match('/'.$ipregex.'/', $this->EE->input->ip_address()) )
+			if( preg_match('/'.$ipregex.'/', ee()->input->ip_address()) )
 			{
 				$ip_found = TRUE;
 				break;
@@ -244,8 +242,8 @@ class Ee_debug_restrict_ext {
 	 */
 	function disable_extension()
 	{
-		$this->EE->db->where('class', __CLASS__);
-		$this->EE->db->delete('extensions');
+		ee()->db->where('class', __CLASS__);
+		ee()->db->delete('extensions');
 	}
 
 	// ----------------------------------------------------------------------
@@ -270,8 +268,8 @@ class Ee_debug_restrict_ext {
 	
 	function enable_debug_output($output=array())
 	{
-		if (in_array('show_profiler', $output)) $this->EE->config->set_item('show_profiler', 'y');
-		if (in_array('template_debugging', $output)) $this->EE->config->set_item('template_debugging', 'y');
+		if (in_array('show_profiler', $output)) ee()->config->set_item('show_profiler', 'y');
+		if (in_array('template_debugging', $output)) ee()->config->set_item('template_debugging', 'y');
 	}
 	
 	

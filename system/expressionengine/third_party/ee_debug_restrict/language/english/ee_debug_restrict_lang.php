@@ -6,7 +6,7 @@ $lang = array(
 	'output'	=> "Select which output to display<br>
 		<em>Ensure to remove show_profiler and template_debugging from the config.php file when using this extension.</em>",
 	'admin_sess'	=> "Restrict to only when logged in with admin session?",
-	'show_in_cp'	=> "Display debugging in the Control Panel?",
+	'disable_in_cp'	=> "Disable debugging in the Control Panel?",
 	'disable_ajax'	=> "Disable debugging on ajax requested content",
 	
 );

@@ -1,0 +1,16 @@
+Changelog for EE Debug Restrict
+===============================
+
+## 1.2
+
+- **Added**: Switched "Display debugging in the Control Panel" to "Disable debugging in the Control Panel"
+- **Fixed**: Various issues and tidied up code
+
+## 1.1
+
+- **Added**: Display debugging in the Control Panel to restrict to front end only
+
+
+## 1.0
+
+- Release version

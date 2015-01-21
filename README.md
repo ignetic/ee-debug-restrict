@@ -8,7 +8,7 @@ This extension enables restriction of the Display Output Profiler and Display Te
 This enables restriction by ip address or by member. 
 
 You can restrict it to only display when logged in with an admin session (rather than logged in via the front end).
-You can disable the debug output on Ajax requested content.
+You can also disable the debug output on Ajax requested content and from displaying within CP.
 
 You may experience problems if 'show_profiler' and 'template_debugging' are in the config.php file. Please remove from the file before using this extension.
 
