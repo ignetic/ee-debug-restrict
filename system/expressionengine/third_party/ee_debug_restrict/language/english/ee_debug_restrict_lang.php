@@ -12,4 +12,4 @@ $lang = array(
 );
 
 /* End of file ee_debug_restrict_lang.php */
-/* Location: /system/expressionengine/third_party/debug_restrict/language/english/ee_debug_restrict_lang.php */
+/* Location: /system/expressionengine/third_party/ee_debug_restrict/language/english/ee_debug_restrict_lang.php */

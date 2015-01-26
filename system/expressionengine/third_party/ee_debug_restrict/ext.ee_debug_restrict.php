@@ -1,7 +1,7 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 /**
- * Debug Restrict Extension
+ * EE Debug Restrict Extension
  *
  * @package		ExpressionEngine
  * @subpackage	Addons
@@ -10,14 +10,14 @@
  * @link		
  */
 
-class Ee_debug_restrict_ext {
+class Ee_debug_restrict_ext
+{
 	
-	public $settings 		= array();
 	public $description		= 'Restricts output debugging to specified IP address or member';
-	public $docs_url		= '';
 	public $name			= 'EE Debug Restrict';
-	public $settings_exist	= 'y';
+	public $docs_url		= '';
 	public $version			= '1.2';
+	public $settings_exist	= 'y';
 	
 	private $default_settings = array(
 		'ip_filter' => '127.0.0.*\n192.168.*.*',
@@ -33,7 +33,7 @@ class Ee_debug_restrict_ext {
 	 *
 	 * @param 	mixed	Settings array or empty string if none exist.
 	 */
-	public function __construct($settings = '')
+	public function __construct($settings='')
 	{
 		$this->settings = $settings;
 	}
@@ -42,13 +42,6 @@ class Ee_debug_restrict_ext {
 	
 	/**
 	 * Settings Form
-	 *
-	 * If you wish for ExpressionEngine to automatically create your settings
-	 * page, work in this method.  If you wish to have fine-grained control
-	 * over your form, use the settings_form() and save_settings() methods 
-	 * instead, and delete this one.
-	 *
-	 * @see http://expressionengine.com/user_guide/development/extensions.html#settings
 	 */
 	public function settings()
 	{
@@ -74,11 +67,6 @@ class Ee_debug_restrict_ext {
 	
 	/**
 	 * Activate Extension
-	 *
-	 * This function enters the extension into the exp_extensions table
-	 *
-	 * @see http://codeigniter.com/user_guide/database/index.html for
-	 * more information on the db class.
 	 *
 	 * @return void
 	 */
@@ -110,7 +98,7 @@ class Ee_debug_restrict_ext {
 	 * @param 
 	 * @return 
 	 */
-	public function sessions_start(&$data)
+	public function sessions_start()
 	{
 
 		// Session class variables not initiated at this point, so lets grab them from the cookie
@@ -262,7 +250,14 @@ class Ee_debug_restrict_ext {
 		{
 			return FALSE;
 		}
+		
+		ee()->db->where('class', __CLASS__);
+		ee()->db->update(
+					'extensions',
+					array('version' => $this->version)
+		);
 	}	
+	
 	
 	// ----------------------------------------------------------------------
 	
@@ -297,4 +292,4 @@ class Ee_debug_restrict_ext {
 }
 
 /* End of file ext.ee_debug_restrict.php */
-/* Location: /system/expressionengine/third_party/ee_debug_restrictdebug_restrict/ext.debug_restrict.php */
+/* Location: /system/expressionengine/third_party/ee_debug_restrict/ext.ee_debug_restrict.php */
