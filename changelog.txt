@@ -1,9 +1,17 @@
 Changelog for EE Debug Restrict
 ===============================
 
+## 1.4
+
+- **Added**: Various fixes and allow comments with # after ip addresses
+
+## 1.3
+
+- **Added**: Enable php error reporting when restricted to member or ip
+
 ## 1.2
 
-- **Added**: Switched "Display debugging in the Control Panel" to "Disable debugging in the Control Panel"
+- **Added**: Switched "Display debugging in the Control Panel" to "Disable debugging" in the Control Panel
 - **Fixed**: Various issues and tidied up code
 
 ## 1.1

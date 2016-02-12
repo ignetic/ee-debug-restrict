@@ -16,7 +16,7 @@ class Ee_debug_restrict_ext
 	public $description		= 'Restricts output debugging to specified IP address or member';
 	public $name			= 'EE Debug Restrict';
 	public $docs_url		= '';
-	public $version			= '1.2';
+	public $version			= '1.4';
 	public $settings_exist	= 'y';
 	
 	private $default_settings = array(
@@ -24,6 +24,7 @@ class Ee_debug_restrict_ext
 		'member_filter' => array(),
 		'output' => array('show_profiler', 'template_debugging'),
 		'admin_sess' => 'n',
+		'error_reporting' => 'n',
 		'disable_in_cp' => 'y',
 		'disable_ajax' => 'y',
 	);
@@ -56,10 +57,11 @@ class Ee_debug_restrict_ext
 		return array(
 			'ip_filter'  => array('t', array('rows' => '4'), $this->default_settings['ip_filter']),
 			'member_filter'  => array('ms', $members, $this->default_settings['member_filter']),
-			'output'  => array('c', array('show_profiler' => 'Display Output Profiler?', 'template_debugging' => 'Display Template Debugging?'), $this->default_settings['output']),
-			'admin_sess'  => array('r', array('y' => "Yes", 'n' => "No"), $this->default_settings['admin_sess']),
-			'disable_in_cp'  => array('r', array('y' => "Yes", 'n' => "No"), $this->default_settings['disable_in_cp']),
-			'disable_ajax'  => array('r', array('y' => "Yes", 'n' => "No"), $this->default_settings['disable_ajax'])
+			'output'  => array('c', array('show_profiler' => 'display_output_profiler', 'template_debugging' => 'display_template_debugging'), $this->default_settings['output']),
+			'admin_sess'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['admin_sess']),
+			'error_reporting'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['error_reporting']),
+			'disable_in_cp'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_in_cp']),
+			'disable_ajax'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_ajax']),
 		);
 	}
 	
@@ -102,7 +104,11 @@ class Ee_debug_restrict_ext
 	{
 
 		// Session class variables not initiated at this point, so lets grab them from the cookie
-		$sessionid  = ee()->input->cookie('sessionid', TRUE);
+		$sessionid = ee()->input->cookie('sessionid', TRUE);
+		
+		// Not logged in
+		if (!$sessionid)
+			return;
 		
 		// Get member details
 		$results = ee()->db->select('members.member_id, admin_sess, group_id')
@@ -123,36 +129,23 @@ class Ee_debug_restrict_ext
 			return;
 		}
 
-		
 		// We are admin, so let's continue...
 		$settings = array_merge($this->default_settings, $this->settings);
 		
-		$ip_found = FALSE;
-		$member_found = FALSE;
-		
-		// Initially switch off outputs
-		ee()->config->set_item('show_profiler', 'n');
-		ee()->config->set_item('template_debugging', 'n');
-
-		// Do nothing if nothing is selected
-		if ( empty($settings['ip_filter']) && empty($settings['member_filter']) )
-		{
-			return;
-		}
-	
 		// Only display if logged in as admin
 		if ($settings['admin_sess'] == 'y' && $member_data['admin_sess'] != 1)
 		{
 			return;
 		}
 		
-		// Don't display in admin
-		//if ($settings['disable_in_cp'] != 'y' && ee()->uri->segment(1) == 'cp')
-		ee()->load->helper('url');
-		if ($settings['disable_in_cp'] == 'y' && site_url().basename($_SERVER['SCRIPT_NAME']) == ee()->config->item('cp_url'))
+		// Do nothing if nothing is selected
+		if ( empty($settings['ip_filter']) && empty($settings['member_filter']) )
 		{
 			return;
 		}
+		
+		$ip_found = FALSE;
+		$member_found = FALSE;
 		
 		// Restrict by member
 		if (in_array($member_data['member_id'], $settings['member_filter']))
@@ -162,9 +155,15 @@ class Ee_debug_restrict_ext
 
 		// Restrict by IP address
 		$ips = explode("\n", $settings['ip_filter']);
-		
 		foreach($ips as $ip)
 		{
+			// Allow for comments with # after ip address
+			$pos = strrpos($ip,'#');
+			if ($pos !== FALSE)
+			{
+				$ip = substr($ip,0,$pos);
+			}
+
 			$ip = trim($ip);
 
 			// Valid IP?
@@ -188,6 +187,19 @@ class Ee_debug_restrict_ext
 			}
 
 		}
+
+		// Initially switch off outputs
+		ee()->config->set_item('show_profiler', 'n');
+		ee()->config->set_item('template_debugging', 'n');
+		
+		
+		// Don't display in admin
+		//if ($settings['disable_in_cp'] != 'y' && ee()->uri->segment(1) == 'cp')
+		ee()->load->helper('url');
+		if ($settings['disable_in_cp'] == 'y' && site_url().basename($_SERVER['SCRIPT_NAME']) == ee()->config->item('cp_url'))
+		{
+			return;
+		}
 		
 		// Check the requirements
 		$enable = FALSE;
@@ -200,10 +212,9 @@ class Ee_debug_restrict_ext
 			$enable = TRUE;
 		}
 		
-	
-		// Turn on outputs
 		if ($enable == TRUE)
 		{
+			// Turn on debugging outputs
 			if ($settings['disable_ajax'] == 'y')
 			{
 				if (!(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest'))
@@ -215,8 +226,15 @@ class Ee_debug_restrict_ext
 			{
 				$this->enable_debug_output($settings['output']);
 			}
-		}
 
+			// Turn on error reporting?
+			if ($settings['enable_error_reporting'] == 'y')
+			{
+				error_reporting(E_ALL);
+				@ini_set('display_errors', 1);
+				ee()->db->db_debug = TRUE;
+			}
+		}
 	}
 
 	// ----------------------------------------------------------------------
