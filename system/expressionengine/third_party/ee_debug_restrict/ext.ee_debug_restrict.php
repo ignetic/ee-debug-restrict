@@ -228,7 +228,7 @@ class Ee_debug_restrict_ext
 			}
 
 			// Turn on error reporting?
-			if ($settings['enable_error_reporting'] == 'y')
+			if ($settings['error_reporting'] == 'y')
 			{
 				error_reporting(E_ALL);
 				@ini_set('display_errors', 1);
