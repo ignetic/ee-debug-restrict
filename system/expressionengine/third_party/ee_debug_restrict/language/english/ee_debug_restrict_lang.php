@@ -4,6 +4,9 @@ $lang = array(
 	'ip_filter'	=> "Restrict debugging by IP Address <br>
 		<span style='font-weight:normal'>Only users with the entered IP addresses will see the debug output</span><br>
 		<em>Each IP Filter should be on it's own line</em>",
+	'uri_filter'	=> "Disable debugging by URI <br>
+		<span style='font-weight:normal'>Disable debugging within the URI's specified</span><br>
+		<em>Each URI should be on it's own line</em>",
 	'member_filter'	=> "Restrict debugging by Member<br>
 		<span style='font-weight:normal'>Only selected members will see the debug output</span><br>
 		<em>Combined with the above IP address restriction</em>",
@@ -15,8 +18,14 @@ $lang = array(
 		<em>This will disable the dubug output in in the Control Panel</em>",
 	'disable_ajax'	=> "Disable debugging on ajax requested content?<br>
 		<em>This will disable the debug output within AJAX requested content and from displaying within CP</em>",
-	'error_reporting'	=> "Restrict PHP error reporting?<br>
+	'disable_act'	=> "Disable debugging with ACT queries?<br>
+		<em>This will disable the debug output when ACT queries are performed</em>",
+	'error_reporting'	=> "Show PHP error reporting?<br>
 		<em>Displays PHP error reporting to only users of the selected ip address or member</em>",
+	'strict_error_reporting'	=> "Use strict error reporting?<br>
+		<em>Show E_STRICT and E_DEPRECATED in error reporting</em>",
+	'hide_php7_warnings'	=> "Hide PHP 7 warnings?<br>
+		<em>Hide 'Declaration of...' warnings in PHP 7</em>",
 	
 	'display_output_profiler' => 'Display Output Profiler?',
 	'display_template_debugging' => 'Display Template Debugging?',

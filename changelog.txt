@@ -1,6 +1,12 @@
 Changelog for EE Debug Restrict
 ===============================
 
+## 1.5
+
+- **Added**: Option to disable debugging by URI 
+- **Added**: Option to hide 'Declaration of...' PHP 7 warnings
+- **Added**: Option to disable disable debugging with ACT uri queries
+
 ## 1.4
 
 - **Added**: Various fixes and allow comments with # after ip addresses

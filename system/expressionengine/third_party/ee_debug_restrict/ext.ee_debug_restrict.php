@@ -16,17 +16,21 @@ class Ee_debug_restrict_ext
 	public $description		= 'Restricts output debugging to specified IP address or member';
 	public $name			= 'EE Debug Restrict';
 	public $docs_url		= '';
-	public $version			= '1.4';
+	public $version			= '1.5';
 	public $settings_exist	= 'y';
 	
 	private $default_settings = array(
-		'ip_filter' => '127.0.0.*\n192.168.*.*',
+		'ip_filter' => '127.0.0.*',
 		'member_filter' => array(),
+		'uri_filter' => '',
 		'output' => array('show_profiler', 'template_debugging'),
 		'admin_sess' => 'n',
 		'error_reporting' => 'n',
+		'strict_error_reporting' => 'n',
+		'hide_php7_warnings' => 'n',
 		'disable_in_cp' => 'y',
 		'disable_ajax' => 'y',
+		'disable_act' => 'y',
 	);
 	
 	/**
@@ -57,11 +61,15 @@ class Ee_debug_restrict_ext
 		return array(
 			'ip_filter'  => array('t', array('rows' => '4'), $this->default_settings['ip_filter']),
 			'member_filter'  => array('ms', $members, $this->default_settings['member_filter']),
+			'uri_filter'  => array('t', array('rows' => '4'), $this->default_settings['uri_filter']),
 			'output'  => array('c', array('show_profiler' => 'display_output_profiler', 'template_debugging' => 'display_template_debugging'), $this->default_settings['output']),
 			'admin_sess'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['admin_sess']),
 			'error_reporting'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['error_reporting']),
+			'strict_error_reporting'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['strict_error_reporting']),
+			'hide_php7_warnings'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['hide_php7_warnings']),
 			'disable_in_cp'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_in_cp']),
 			'disable_ajax'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_ajax']),
+			'disable_act'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_act']),
 		);
 	}
 	
@@ -214,6 +222,36 @@ class Ee_debug_restrict_ext
 		
 		if ($enable == TRUE)
 		{
+			// Disable with ACT queries
+			if ($settings['disable_act'] == 'y')
+			{
+				$act = ee()->input->get('ACT', TRUE);
+				if ($act !== FALSE)
+				{
+					return;
+				}
+			}
+
+			// Restrict by URI
+			$uris = explode("\n", $settings['uri_filter']);
+			foreach($uris as $uri)
+			{
+				$uri = trim($uri);
+				$current_uri = trim(ee()->uri->uri_string(), '/');
+				if ($current_uri == '' && $uri == '/')
+				{
+					// is home page
+					return;
+				}
+				$uri = trim($uri, '/');
+				if (!empty($uri) && strpos($current_uri, $uri) === 0)
+				{
+					// is uri
+					return;
+				}
+			}
+			
+			
 			// Turn on debugging outputs
 			if ($settings['disable_ajax'] == 'y')
 			{
@@ -230,9 +268,27 @@ class Ee_debug_restrict_ext
 			// Turn on error reporting?
 			if ($settings['error_reporting'] == 'y')
 			{
-				error_reporting(E_ALL);
+				if ($settings['strict_error_reporting'] == 'y')
+				{
+					error_reporting(E_ALL);
+				}
+				else
+				{
+					error_reporting(E_ALL & ~E_STRICT & ~E_DEPRECATED);
+				}
+				
+				if ($settings['hide_php7_warnings'] == 'y')
+				{
+					if (PHP_MAJOR_VERSION >= 7) {
+						set_error_handler(function ($errno, $errstr) {
+						   return strpos($errstr, 'Declaration of') === 0;
+						}, E_WARNING);
+					}
+				}
+				
 				@ini_set('display_errors', 1);
 				ee()->db->db_debug = TRUE;
+				
 			}
 		}
 	}
@@ -281,8 +337,14 @@ class Ee_debug_restrict_ext
 	
 	function enable_debug_output($output=array())
 	{
-		if (in_array('show_profiler', $output)) ee()->config->set_item('show_profiler', 'y');
-		if (in_array('template_debugging', $output)) ee()->config->set_item('template_debugging', 'y');
+		if (in_array('show_profiler', $output)) {
+			ee()->config->set_item('show_profiler', 'y');
+			ee()->output->enable_profiler(TRUE);
+//			ee()->db->db_debug = TRUE;
+		}
+		if (in_array('template_debugging', $output)) {
+			ee()->config->set_item('template_debugging', 'y');
+		}
 	}
 	
 	
