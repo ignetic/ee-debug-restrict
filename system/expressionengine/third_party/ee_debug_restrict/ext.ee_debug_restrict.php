@@ -16,7 +16,7 @@ class Ee_debug_restrict_ext
 	public $description		= 'Restricts output debugging to specified IP address or member';
 	public $name			= 'EE Debug Restrict';
 	public $docs_url		= '';
-	public $version			= '1.5';
+	public $version			= '1.6';
 	public $settings_exist	= 'y';
 	
 	private $default_settings = array(
@@ -26,6 +26,7 @@ class Ee_debug_restrict_ext
 		'output' => array('show_profiler', 'template_debugging'),
 		'admin_sess' => 'n',
 		'error_reporting' => 'n',
+		'error_reporting_level' => 'all',
 		'strict_error_reporting' => 'n',
 		'hide_php7_warnings' => 'n',
 		'disable_in_cp' => 'y',
@@ -58,21 +59,30 @@ class Ee_debug_restrict_ext
 			$members[$row['member_id']] = $row['username'];
 		}
 		
+		$error_reporting_level = array(
+			'all' => 'E_ALL',
+			'strict' => 'E_ALL | E_STRICT',
+			'warning' => 'E_ALL & ~E_WARNING',
+			'deprecated' => 'E_ALL & ~E_DEPRECATED',
+			'warning_deprecated' => 'E_ALL & ~E_WARNING & ~E_DEPRECATED'
+		);
+				
 		return array(
 			'ip_filter'  => array('t', array('rows' => '4'), $this->default_settings['ip_filter']),
 			'member_filter'  => array('ms', $members, $this->default_settings['member_filter']),
 			'uri_filter'  => array('t', array('rows' => '4'), $this->default_settings['uri_filter']),
 			'output'  => array('c', array('show_profiler' => 'display_output_profiler', 'template_debugging' => 'display_template_debugging'), $this->default_settings['output']),
 			'admin_sess'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['admin_sess']),
-			'error_reporting'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['error_reporting']),
-			'strict_error_reporting'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['strict_error_reporting']),
-			'hide_php7_warnings'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['hide_php7_warnings']),
 			'disable_in_cp'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_in_cp']),
 			'disable_ajax'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_ajax']),
 			'disable_act'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_act']),
+			'error_reporting'  => array('s', array('y' => "yes", 'n' => "no"), $this->default_settings['error_reporting']),
+			'error_reporting_level'  => array('s', $error_reporting_level, $this->default_settings['error_reporting_level']),
+			//'strict_error_reporting'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['strict_error_reporting']),
+			'hide_php7_warnings'  => array('s', array('y' => "yes", 'n' => "no"), $this->default_settings['hide_php7_warnings']),
 		);
 	}
-	
+
 	// ----------------------------------------------------------------------
 	
 	/**
@@ -110,7 +120,13 @@ class Ee_debug_restrict_ext
 	 */
 	public function sessions_start()
 	{
-
+		
+		// Ignore this on the actual Output and Debugging settings page
+		if (ee()->uri->uri_string() == 'cp/admin_system/output_debugging_preferences')
+		{
+			return;
+		}
+	
 		// Session class variables not initiated at this point, so lets grab them from the cookie
 		$sessionid = ee()->input->cookie('sessionid', TRUE);
 		
@@ -268,15 +284,24 @@ class Ee_debug_restrict_ext
 			// Turn on error reporting?
 			if ($settings['error_reporting'] == 'y')
 			{
-				if ($settings['strict_error_reporting'] == 'y')
-				{
-					error_reporting(E_ALL);
+			
+				switch ($settings['error_reporting_level']) {
+					case 'strict':
+						error_reporting(E_ALL | E_STRICT);
+						break;
+					case 'warning':
+						error_reporting(E_ALL & ~E_WARNING);
+						break;
+					case 'deprecated':
+						error_reporting(E_ALL & ~E_DEPRECATED);
+						break;
+					case 'warning_deprecated':
+						error_reporting(E_ALL & ~E_WARNING & ~E_DEPRECATED);
+						break;
+					default:
+						error_reporting(E_ALL);
 				}
-				else
-				{
-					error_reporting(E_ALL & ~E_STRICT & ~E_DEPRECATED);
-				}
-				
+
 				if ($settings['hide_php7_warnings'] == 'y')
 				{
 					if (PHP_MAJOR_VERSION >= 7) {
@@ -290,6 +315,7 @@ class Ee_debug_restrict_ext
 				ee()->db->db_debug = TRUE;
 				
 			}
+			
 		}
 	}
 

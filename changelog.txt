@@ -1,6 +1,10 @@
 Changelog for EE Debug Restrict
 ===============================
 
+## 1.6
+
+- **Update**: Changes to PHP error reporting levels
+
 ## 1.5
 
 - **Added**: Option to disable debugging by URI 

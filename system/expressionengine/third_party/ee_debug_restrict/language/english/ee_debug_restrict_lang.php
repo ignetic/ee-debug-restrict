@@ -19,9 +19,10 @@ $lang = array(
 	'disable_ajax'	=> "Disable debugging on ajax requested content?<br>
 		<em>This will disable the debug output within AJAX requested content and from displaying within CP</em>",
 	'disable_act'	=> "Disable debugging with ACT queries?<br>
-		<em>This will disable the debug output when ACT queries are performed</em>",
+		<em>This will disable the debug output when ACT URL queries are performed</em>",
 	'error_reporting'	=> "Show PHP error reporting?<br>
 		<em>Displays PHP error reporting to only users of the selected ip address or member</em>",
+	'error_reporting_level'	=> "PHP error reporting level",
 	'strict_error_reporting'	=> "Use strict error reporting?<br>
 		<em>Show E_STRICT and E_DEPRECATED in error reporting</em>",
 	'hide_php7_warnings'	=> "Hide PHP 7 warnings?<br>
