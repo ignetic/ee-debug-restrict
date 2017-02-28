@@ -1,34 +1,31 @@
 Changelog for EE Debug Restrict
 ===============================
 
-## 1.6
+## 1.7
+- **Update**: EE3 compatibilty
+- **Update**: Changes to uri restriction with added % wildcard
 
+## 1.6
 - **Update**: Changes to PHP error reporting levels
 
 ## 1.5
-
 - **Added**: Option to disable debugging by URI 
 - **Added**: Option to hide 'Declaration of...' PHP 7 warnings
 - **Added**: Option to disable disable debugging with ACT uri queries
 
 ## 1.4
-
 - **Added**: Various fixes and allow comments with # after ip addresses
 
 ## 1.3
-
 - **Added**: Enable php error reporting when restricted to member or ip
 
 ## 1.2
-
 - **Added**: Switched "Display debugging in the Control Panel" to "Disable debugging" in the Control Panel
 - **Fixed**: Various issues and tidied up code
 
 ## 1.1
-
 - **Added**: Display debugging in the Control Panel to restrict to front end only
 
 
 ## 1.0
-
 - Release version

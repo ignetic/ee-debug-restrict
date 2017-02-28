@@ -9,14 +9,16 @@
  * @author		Simon Andersohn
  * @link		
  */
+ 
+require_once PATH_THIRD."ee_debug_restrict/config.php";
 
 class Ee_debug_restrict_ext
 {
 	
-	public $description		= 'Restricts output debugging to specified IP address or member';
-	public $name			= 'EE Debug Restrict';
-	public $docs_url		= '';
-	public $version			= '1.6';
+	public $description		= EE_DEBUG_RESTRICT_DESCRIPTION;
+	public $name			= EE_DEBUG_RESTRICT_NAME;
+	public $docs_url		= EE_DEBUG_RESTRICT_DOCS_URL;
+	public $version			= EE_DEBUG_RESTRICT_VERSION;
 	public $settings_exist	= 'y';
 	
 	private $default_settings = array(
@@ -25,13 +27,13 @@ class Ee_debug_restrict_ext
 		'uri_filter' => '',
 		'output' => array('show_profiler', 'template_debugging'),
 		'admin_sess' => 'n',
-		'error_reporting' => 'n',
-		'error_reporting_level' => 'all',
-		'strict_error_reporting' => 'n',
-		'hide_php7_warnings' => 'n',
 		'disable_in_cp' => 'y',
 		'disable_ajax' => 'y',
 		'disable_act' => 'y',
+		
+		'error_reporting' => 'n',
+		'error_reporting_level' => 'all',
+		'hide_php7_warnings' => 'n',
 	);
 	
 	/**
@@ -66,19 +68,27 @@ class Ee_debug_restrict_ext
 			'deprecated' => 'E_ALL & ~E_DEPRECATED',
 			'warning_deprecated' => 'E_ALL & ~E_WARNING & ~E_DEPRECATED'
 		);
-				
+		
+		if (defined('APP_VER') && version_compare(APP_VER, '3.0.0', '>='))
+		{
+			$enable_dubugging = array('c', array('show_profiler' => 'enable'), $this->default_settings['output']);
+		}
+		else
+		{
+			$enable_dubugging = array('c', array('show_profiler' => 'display_output_profiler', 'template_debugging' => 'display_template_debugging'), $this->default_settings['output']);
+		}
+		
 		return array(
 			'ip_filter'  => array('t', array('rows' => '4'), $this->default_settings['ip_filter']),
 			'member_filter'  => array('ms', $members, $this->default_settings['member_filter']),
 			'uri_filter'  => array('t', array('rows' => '4'), $this->default_settings['uri_filter']),
-			'output'  => array('c', array('show_profiler' => 'display_output_profiler', 'template_debugging' => 'display_template_debugging'), $this->default_settings['output']),
+			'output'  => $enable_dubugging,
 			'admin_sess'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['admin_sess']),
 			'disable_in_cp'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_in_cp']),
 			'disable_ajax'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_ajax']),
 			'disable_act'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_act']),
 			'error_reporting'  => array('s', array('y' => "yes", 'n' => "no"), $this->default_settings['error_reporting']),
 			'error_reporting_level'  => array('s', $error_reporting_level, $this->default_settings['error_reporting_level']),
-			//'strict_error_reporting'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['strict_error_reporting']),
 			'hide_php7_warnings'  => array('s', array('y' => "yes", 'n' => "no"), $this->default_settings['hide_php7_warnings']),
 		);
 	}
@@ -120,9 +130,13 @@ class Ee_debug_restrict_ext
 	 */
 	public function sessions_start()
 	{
-		
+
 		// Ignore this on the actual Output and Debugging settings page
-		if (ee()->uri->uri_string() == 'cp/admin_system/output_debugging_preferences')
+		if (
+			ee()->uri->uri_string() == 'cp/admin_system/output_debugging_preferences'
+			|| 
+			ee()->uri->uri_string() == 'cp/settings/debug-output'
+		)
 		{
 			return;
 		}
@@ -249,20 +263,40 @@ class Ee_debug_restrict_ext
 			}
 
 			// Restrict by URI
-			$uris = explode("\n", $settings['uri_filter']);
-			foreach($uris as $uri)
+			$uris = explode("\n", trim($settings['uri_filter']));
+			$uris = array_filter($uris, function($value) { return $value !== ''; });
+			
+			if (!empty($uris))
 			{
-				$uri = trim($uri);
-				$current_uri = trim(ee()->uri->uri_string(), '/');
-				if ($current_uri == '' && $uri == '/')
+				$uri_found = FALSE;
+				foreach($uris as $uri)
 				{
-					// is home page
-					return;
+					$uri = trim($uri);
+					$current_uri = trim(ee()->uri->uri_string(), '/');
+					if ($current_uri == '' && $uri == '/')
+					{
+						// is home page
+						$uri_found = TRUE;
+					}
+					$uri = trim($uri, '/');
+					if (!empty($uri)) 
+					{
+						if (substr($uri, -1) == '%')
+						{
+							$wildcard_uri = rtrim($uri, '%');
+							if (strpos($current_uri, $wildcard_uri) === 0)
+							{
+								$uri_found = TRUE;
+							}
+						}
+						elseif ($current_uri == $uri)
+						{
+							$uri_found = TRUE;
+						}
+					}
 				}
-				$uri = trim($uri, '/');
-				if (!empty($uri) && strpos($current_uri, $uri) === 0)
+				if ($uri_found === FALSE)
 				{
-					// is uri
 					return;
 				}
 			}
@@ -378,21 +412,18 @@ class Ee_debug_restrict_ext
 	
 	function validateIpAddress($ip_addr)
 	{
-	  //first of all the format of the ip address is matched
-	  if(preg_match("/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/",$ip_addr))
-	  {
-	    //now all the intger values are separated
-	    $parts=explode(".",$ip_addr);
-	    //now we need to check each part can range from 0-255
-	    foreach($parts as $ip_parts)
-	    {
-	      if(intval($ip_parts)>255 || intval($ip_parts)<0)
-	      return false; //if number is not within range of 0-255
-	    }
-	    return true;
-	  }
-	  else
-	    return false; //if format of ip address doesn't matches
+		if (preg_match("/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/", $ip_addr))
+		{
+			$parts = explode(".", $ip_addr);
+			foreach($parts as $ip_parts)
+			{
+				if (intval($ip_parts) > 255 || intval($ip_parts) < 0)
+				return FALSE;
+			}
+			return TRUE;
+		}
+		else
+			return FALSE;
 	}
 	
 }
