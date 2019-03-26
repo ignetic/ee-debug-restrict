@@ -3,7 +3,7 @@
 $lang = array(
 	'ip_filter'	=> "Restrict debugging by IP Address <br>
 		<span style='font-weight:normal'>Only users with the entered IP addresses will see the debug output</span><br>
-		<em>Each IP Filter should be on it's own line</em>",
+		<em>Each IP Filter should be on it's own line. Example: 192.168.1.*</em>",
 	'member_filter'	=> "Restrict debugging by Member<br>
 		<span style='font-weight:normal'>Only selected members will see the debug output</span><br>
 		<em>Combined with the above IP address restriction</em>",

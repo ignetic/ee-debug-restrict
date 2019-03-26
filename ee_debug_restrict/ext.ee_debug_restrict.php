@@ -22,7 +22,7 @@ class Ee_debug_restrict_ext
 	public $settings_exist	= 'y';
 	
 	private $default_settings = array(
-		'ip_filter' => '127.0.0.*',
+		'ip_filter' => '',
 		'member_filter' => array(),
 		'uri_filter' => '',
 		'output' => array('show_profiler', 'template_debugging'),
@@ -79,10 +79,10 @@ class Ee_debug_restrict_ext
 		}
 		
 		return array(
+			'output'  => $enable_dubugging,
 			'ip_filter'  => array('t', array('rows' => '4'), $this->default_settings['ip_filter']),
 			'member_filter'  => array('ms', $members, $this->default_settings['member_filter']),
 			'uri_filter'  => array('t', array('rows' => '4'), $this->default_settings['uri_filter']),
-			'output'  => $enable_dubugging,
 			'admin_sess'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['admin_sess']),
 			'disable_in_cp'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_in_cp']),
 			'disable_ajax'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_ajax']),
@@ -169,7 +169,7 @@ class Ee_debug_restrict_ext
 
 		// We are admin, so let's continue...
 		$settings = array_merge($this->default_settings, $this->settings);
-		
+	
 		// Only display if logged in as admin
 		if ($settings['admin_sess'] == 'y' && $member_data['admin_sess'] != 1)
 		{
@@ -177,7 +177,7 @@ class Ee_debug_restrict_ext
 		}
 		
 		// Do nothing if nothing is selected
-		if ( empty($settings['ip_filter']) && empty($settings['member_filter']) )
+		if ( empty($settings['ip_filter']) && empty($settings['member_filter'])  && empty($settings['uri_filter']) )
 		{
 			return;
 		}
@@ -229,15 +229,15 @@ class Ee_debug_restrict_ext
 		// Initially switch off outputs
 		ee()->config->set_item('show_profiler', 'n');
 		ee()->config->set_item('template_debugging', 'n');
-		
+
 		
 		// Don't display in admin
-		//if ($settings['disable_in_cp'] != 'y' && ee()->uri->segment(1) == 'cp')
-		ee()->load->helper('url');
-		if ($settings['disable_in_cp'] == 'y' && site_url().basename($_SERVER['SCRIPT_NAME']) == ee()->config->item('cp_url'))
+		//ee()->load->helper('url');
+		if ($settings['disable_in_cp'] == 'y' && substr(ee()->config->item('cp_url'), -strlen($_SERVER['SCRIPT_NAME'])) == $_SERVER['SCRIPT_NAME'])
 		{
 			return;
 		}
+
 		
 		// Check the requirements
 		$enable = FALSE;
@@ -249,7 +249,7 @@ class Ee_debug_restrict_ext
 		{
 			$enable = TRUE;
 		}
-		
+
 		if ($enable == TRUE)
 		{
 			// Disable with ACT queries
