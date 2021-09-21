@@ -1,6 +1,12 @@
 Changelog for EE Debug Restrict
 ===============================
 
+## 1.8.1
+- **Update**: Removed PHP7 declaration warning checks for PHP7+ versions
+
+## 1.8
+- **Update**: EE5 compatibilty
+
 ## 1.7
 - **Update**: EE3 compatibilty
 - **Update**: Changes to uri restriction with added % wildcard

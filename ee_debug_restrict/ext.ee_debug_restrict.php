@@ -65,8 +65,8 @@ class Ee_debug_restrict_ext
 			'all' => 'E_ALL',
 			'strict' => 'E_ALL | E_STRICT',
 			'warning' => 'E_ALL & ~E_WARNING',
-			'deprecated' => 'E_ALL & ~E_DEPRECATED',
-			'warning_deprecated' => 'E_ALL & ~E_WARNING & ~E_DEPRECATED'
+			'deprecated' => 'E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED',
+			'warning_deprecated' => 'E_ALL & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED'
 		);
 		
 		if (defined('APP_VER') && version_compare(APP_VER, '3.0.0', '>='))
@@ -77,8 +77,8 @@ class Ee_debug_restrict_ext
 		{
 			$enable_dubugging = array('c', array('show_profiler' => 'display_output_profiler', 'template_debugging' => 'display_template_debugging'), $this->default_settings['output']);
 		}
-		
-		return array(
+
+		$output = array(
 			'output'  => $enable_dubugging,
 			'ip_filter'  => array('t', array('rows' => '4'), $this->default_settings['ip_filter']),
 			'member_filter'  => array('ms', $members, $this->default_settings['member_filter']),
@@ -89,8 +89,16 @@ class Ee_debug_restrict_ext
 			'disable_act'  => array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['disable_act']),
 			'error_reporting'  => array('s', array('y' => "yes", 'n' => "no"), $this->default_settings['error_reporting']),
 			'error_reporting_level'  => array('s', $error_reporting_level, $this->default_settings['error_reporting_level']),
-			'hide_php7_warnings'  => array('s', array('y' => "yes", 'n' => "no"), $this->default_settings['hide_php7_warnings']),
+			//'hide_php7_warnings'  => array('s', array('y' => "yes", 'n' => "no"), $this->default_settings['hide_php7_warnings']),
 		);
+		
+		if (version_compare(phpversion(), '7', '<='))
+		{
+			$output['hide_php7_warnings'] = array('s', array('y' => "yes", 'n' => "no"), $this->default_settings['hide_php7_warnings']);
+		}
+		
+		return $output;
+		
 	}
 
 	// ----------------------------------------------------------------------
@@ -150,11 +158,11 @@ class Ee_debug_restrict_ext
 		
 		// Get member details
 		$results = ee()->db->select('members.member_id, admin_sess, group_id')
-							->from('members')
-							->join('sessions', 'sessions.member_id = members.member_id')
-							->where(array('sessions.session_id' => $sessionid, 'group_id' => 1))
-							->limit(1)
-							->get();
+			->from('members')
+			->join('sessions', 'sessions.member_id = members.member_id')
+			->where(array('sessions.session_id' => $sessionid, 'group_id' => 1))
+			->limit(1)
+			->get();
 
 		if ($results->num_rows() > 0)
 		{
@@ -327,10 +335,10 @@ class Ee_debug_restrict_ext
 						error_reporting(E_ALL & ~E_WARNING);
 						break;
 					case 'deprecated':
-						error_reporting(E_ALL & ~E_DEPRECATED);
+						error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 						break;
 					case 'warning_deprecated':
-						error_reporting(E_ALL & ~E_WARNING & ~E_DEPRECATED);
+						error_reporting(E_ALL & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 						break;
 					default:
 						error_reporting(E_ALL);
@@ -427,6 +435,3 @@ class Ee_debug_restrict_ext
 	}
 	
 }
-
-/* End of file ext.ee_debug_restrict.php */
-/* Location: /system/expressionengine/third_party/ee_debug_restrict/ext.ee_debug_restrict.php */
