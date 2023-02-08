@@ -53,14 +53,6 @@ class Ee_debug_restrict_ext
 	 */
 	public function settings()
 	{
-		
-		$members = array();
-		$results = ee()->db->select('member_id, username')->where('group_id', 1)->get('members');
-		foreach($results->result_array() as $row)
-		{
-			$members[$row['member_id']] = $row['username'];
-		}
-		
 		$error_reporting_level = array(
 			'all' => 'E_ALL',
 			'strict' => 'E_ALL | E_STRICT',
@@ -68,6 +60,22 @@ class Ee_debug_restrict_ext
 			'deprecated' => 'E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED',
 			'warning_deprecated' => 'E_ALL & ~E_WARNING & ~E_DEPRECATED & ~E_USER_DEPRECATED'
 		);
+		
+		$members = array();
+		
+		if (defined('APP_VER') && version_compare(APP_VER, '6.0.0', '>='))
+		{
+			$results = ee()->db->select('member_id, username')->where('role_id', 1)->get('members');
+		} 
+		else 
+		{
+			$results = ee()->db->select('member_id, username')->where('group_id', 1)->get('members');
+		}
+		
+		foreach($results->result_array() as $row)
+		{
+			$members[$row['member_id']] = $row['username'];
+		}
 		
 		if (defined('APP_VER') && version_compare(APP_VER, '3.0.0', '>='))
 		{
@@ -157,12 +165,26 @@ class Ee_debug_restrict_ext
 			return;
 		
 		// Get member details
-		$results = ee()->db->select('members.member_id, admin_sess, group_id')
-			->from('members')
-			->join('sessions', 'sessions.member_id = members.member_id')
-			->where(array('sessions.session_id' => $sessionid, 'group_id' => 1))
-			->limit(1)
-			->get();
+
+			
+		if (defined('APP_VER') && version_compare(APP_VER, '6.0.0', '>='))
+		{
+			$results = ee()->db->select('members.member_id, admin_sess, role_id')
+				->from('members')
+				->join('sessions', 'sessions.member_id = members.member_id')
+				->where(array('sessions.session_id' => $sessionid, 'role_id' => 1))
+				->limit(1)
+				->get();
+		} 
+		else 
+		{
+			$results = ee()->db->select('members.member_id, admin_sess, group_id')
+				->from('members')
+				->join('sessions', 'sessions.member_id = members.member_id')
+				->where(array('sessions.session_id' => $sessionid, 'group_id' => 1))
+				->limit(1)
+				->get();
+		}
 
 		if ($results->num_rows() > 0)
 		{
